@@ -1,0 +1,10 @@
+import type { assetType } from '@bynder/compact-view';
+export declare const pluginId: string;
+export declare const fastClone: <T>(obj: T) => T | undefined;
+export declare const BYNDER_URL = "bynder_URL";
+export declare const BYNDER_LANGUAGE = "bynder_language";
+export declare const SHOW_ASSET_FIELD_SELECTION = "showAssetFieldSelection";
+export declare const ASSET_FIELD_SELECTION = "assetFieldSelection";
+export declare const AssetTypes: assetType[];
+export declare const SupportedLanguages: readonly ["en_US", "nl_NL", "de_DE", "fr_FR", "es_ES"];
+export type SupportedLanguage = (typeof SupportedLanguages)[number];
