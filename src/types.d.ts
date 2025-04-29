@@ -1,6 +1,19 @@
-import { assetType, File, AdditionalInfo, selectionMode } from '@bynder/compact-view';
+import {
+  assetType,
+  File,
+  AdditionalInfo,
+  selectionMode,
+} from "@bynder/compact-view";
 
-type BynderAssetFile = { assets?: BynderAsset[]; additionalInfo?: AdditionalInfo };
+type BynderAssetFile = {
+  assets?: BynderAsset[];
+  additionalInfo?: AdditionalInfo;
+};
+
+type SimpleBynderAssetFile = {
+  // fileName: string;
+  url: string;
+};
 
 export type BuilderPluginProps<T> = {
   onChange: (value: T) => void;
@@ -8,18 +21,30 @@ export type BuilderPluginProps<T> = {
   context: any;
 };
 
-export type BynderCompactViewProps = BuilderPluginProps<BynderAssetFile> & {
-  mode: selectionMode;
-  assetTypes?: assetType[];
-};
+export type BynderCompactViewProps =
+  BuilderPluginProps<SimpleBynderAssetFile> & {
+    mode: selectionMode;
+    assetTypes?: assetType[];
+  };
+// export type BynderCompactViewProps = BuilderPluginProps<BynderAssetFile> & {
+//   mode: selectionMode;
+//   assetTypes?: assetType[];
+// };
 
 export interface RenderSinglePreviewProps {
-  value?: BynderAssetFile;
-  fallbackValue?: BynderAssetFile;
+  value?: SimpleBynderAssetFile;
+  fallbackValue?: SimpleBynderAssetFile;
   onClick: () => void;
   onClear: () => void;
   context: any;
 }
+// export interface RenderSinglePreviewProps {
+//   value?: BynderAssetFile;
+//   fallbackValue?: BynderAssetFile;
+//   onClick: () => void;
+//   onClear: () => void;
+//   context: any;
+// }
 
 // AI-generated types from 3 different Bynder assets, may not be complete, hence the extends Record.
 type Capitalize<S extends string> = S extends `${infer F}${infer R}`
@@ -60,19 +85,19 @@ interface BaseAsset extends Record<string, any> {
 }
 
 interface ImageAsset extends BaseAsset {
-  __typename: 'Image';
-  type: 'IMAGE';
+  __typename: "Image";
+  type: "IMAGE";
 }
 
 interface VideoAsset extends BaseAsset {
-  __typename: 'Video';
-  type: 'VIDEO';
+  __typename: "Video";
+  type: "VIDEO";
   previewUrls: string[];
 }
 
 interface DocumentAsset extends BaseAsset {
-  __typename: 'Document';
-  type: 'DOCUMENT';
+  __typename: "Document";
+  type: "DOCUMENT";
 }
 
 export type BynderAsset = ImageAsset | VideoAsset | DocumentAsset;

@@ -1,7 +1,7 @@
 /** @jsx jsx */
-import React from 'react';
-import { jsx } from '@emotion/core';
-import appState from '@builder.io/app-context';
+import React from "react";
+import { jsx } from "@emotion/core";
+import appState from "@builder.io/app-context";
 import {
   AdditionalInfo,
   CompactView,
@@ -9,19 +9,26 @@ import {
   Login,
   Modal,
   type selectionMode,
-} from '@bynder/compact-view';
-import { Button, IconButton, Paper, Tooltip, Typography } from '@material-ui/core';
-import { Close } from '@material-ui/icons';
-import { IconCloudUpload } from '@tabler/icons-react';
-import { partial } from 'filesize';
+} from "@bynder/compact-view";
+import {
+  Button,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography,
+} from "@material-ui/core";
+import { Close } from "@material-ui/icons";
+import { IconCloudUpload } from "@tabler/icons-react";
+import { partial } from "filesize";
 
 import type {
   BuilderPluginProps,
   BynderAsset,
   BynderAssetFile,
+  SimpleBynderAssetFile,
   BynderCompactViewProps,
   RenderSinglePreviewProps,
-} from './types';
+} from "./types";
 import {
   ASSET_FIELD_SELECTION,
   AssetTypes,
@@ -32,18 +39,23 @@ import {
   SupportedLanguages,
   fastClone,
   pluginId,
-} from './utils';
+} from "./utils";
 
-const filesize = partial({ standard: 'jedec' });
+// const filesize = partial({ standard: "jedec" });
 
 // This component is what handles rendering when the user selects the Bynder plugin
 // It is recommended for additional versions of this Selector to keep the input type (BynderAssetFile),
 // even if SingleSelect and MultiSelect modes do not return the additionalInfo object
-export const AssetSelector: React.FC<BuilderPluginProps<BynderAssetFile>> = props => {
+export const AssetSelector: React.FC<
+  BuilderPluginProps<SimpleBynderAssetFile>
+> = (
+  // export const AssetSelector: React.FC<BuilderPluginProps<BynderAssetFile>> = (
+  props,
+) => {
   const addProps = {
     ...props,
     // The Bynder CompactView mode to use. SingleSelectFile provides DAT and other asset transforms.
-    mode: 'SingleSelectFile' as selectionMode,
+    mode: "SingleSelectFile" as selectionMode,
     // Hopefully Builder will provide a way to select these via the plugin interface,
     // such they are set per input instance. Hardcoded for now.
     assetTypes: AssetTypes,
@@ -61,25 +73,41 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
   // Keep a local state value because onChange does not trigger a re-render with a new value object.
   const [internalValue, setInternalValue] = React.useState(fastClone(value));
 
-  const onChangeWrapper = (asset: BynderAssetFile) => {
+  const onChangeWrapper = (asset: SimpleBynderAssetFile) => {
     onChange(asset);
     setInternalValue(asset);
   };
+  // const onChangeWrapper = (asset: BynderAssetFile) => {
+  //   onChange(asset);
+  //   setInternalValue(asset);
+  // };
 
   // additionalInfo is only returned by Bynder when mode === "SingleSelectFile"
   const onSuccess = (assets: unknown[], additionalInfo: AdditionalInfo) => {
-    onChangeWrapper({ assets: assets as BynderAsset[], additionalInfo });
+    const url = additionalInfo?.selectedFile?.url;
+    // const asset = assets?.[0];
+    // let fileName = "";
+    // if (asset) {
+    //   fileName = `${(asset as any).name}.${(asset as any).extensions[0]}`;
+    // }
+    if (url) {
+      onChangeWrapper({ url });
+    }
+    // if (url && fileName) {
+    //   onChangeWrapper({ url, fileName });
+    // }
     // Manually close the modal. The onClose prop only fires when the user clicks the close button.
     setIsOpen(false);
   };
 
-  const selectedAssets = React.useMemo(() => {
-    return (internalValue?.assets ?? []).map(asset => asset.id);
-  }, [internalValue]);
+  // const selectedAssets = React.useMemo(() => {
+  //   return (internalValue?.assets ?? []).map((asset) => asset.id);
+  // }, [internalValue]);
 
   // Get the saved Bynder URL from the plugin settings
 
-  const pluginSettings = appState.user.organization.value.settings.plugins?.get(pluginId);
+  const pluginSettings =
+    appState.user.organization.value.settings.plugins?.get(pluginId);
   const url = pluginSettings?.get(BYNDER_URL);
   const language = pluginSettings?.get(BYNDER_LANGUAGE) as SupportedLanguage;
 
@@ -93,7 +121,9 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
 
   // Add the assetFieldSelection prop only if the user has enabled it in advanced settings
   if (pluginSettings?.get(SHOW_ASSET_FIELD_SELECTION)) {
-    bynderProps.assetFieldSelection = pluginSettings?.get(ASSET_FIELD_SELECTION);
+    bynderProps.assetFieldSelection = pluginSettings?.get(
+      ASSET_FIELD_SELECTION,
+    );
   }
 
   return (
@@ -103,20 +133,26 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
       {/* If you don't need the DAT or Asset Derivatives, just use SingleSelect */}
       {/* {mode === "SingleSelect" && ()} */}
 
-      {mode === 'SingleSelectFile' && (
+      {mode === "SingleSelectFile" && (
         <RenderSinglePreview
           value={internalValue}
           fallbackValue={fastClone(value)}
+          // fallbackValue={fastClone(value)}
           onClick={() => setIsOpen(true)}
           onClear={() => {
-            onChangeWrapper({ assets: [] });
+            onChangeWrapper({ url: "" });
+            // onChangeWrapper({ url: "", fileName: "" });
+            // onChangeWrapper({ assets: [] });
           }}
           context={context}
         />
       )}
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-        <Login portal={{ url, editable: false }} language={bynderProps.language}>
+        <Login
+          portal={{ url, editable: false }}
+          language={bynderProps.language}
+        >
           <CompactView {...bynderProps} />
         </Login>
       </Modal>
@@ -124,26 +160,33 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
   );
 };
 
-const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = props => {
+const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
   const { value, fallbackValue, onClick, onClear, context } = props;
   // Builder provided context for matching the editor theme
   const theme = context.theme;
 
-  const asset = value?.assets?.[0] || fallbackValue?.assets?.[0];
+  const asset = value?.url || fallbackValue?.url;
+  const fileName = asset;
+  // const fileName = value?.fileName || fallbackValue?.fileName;
+  // const asset = value?.assets?.[0] || fallbackValue?.assets?.[0];
 
   // Account for translated assets / DAT, when using the "SingleSelectFile" mode.
   // Fallback to the selected asset if additionalInfo isn't provided.
-  const displayAsset = value?.additionalInfo?.selectedFile ?? asset?.files?.webImage;
-  const thumbnailAsset = value?.additionalInfo?.selectedFile ?? asset?.files?.thumbnail;
 
-  const fileName = asset && `${asset?.name}.${asset.extensions[0]}`;
+  // const displayAsset =
+  //   value?.additionalInfo?.selectedFile ?? asset?.files?.webImage;
+  // const thumbnailAsset =
+  //   value?.additionalInfo?.selectedFile ?? asset?.files?.thumbnail;
+
+  // const fileName = asset && `${asset?.name}.${asset.extensions[0]}`;
+
   return (
     <div
       css={{
-        display: 'flex',
-        alignItems: 'center',
-        '&:hover .close-button': { display: 'flex' },
-        position: 'relative',
+        display: "flex",
+        alignItems: "center",
+        "&:hover .close-button": { display: "flex" },
+        position: "relative",
         border: `1px solid ${theme.colors.border}`,
         borderRadius: 4,
         padding: 8,
@@ -152,31 +195,32 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = props => {
       {asset ? (
         <div
           css={{
-            position: 'relative',
-            '&:hover .close-button': { opacity: 1 },
+            position: "relative",
+            "&:hover .close-button": { opacity: 1 },
           }}
         >
           <div
             css={{
-              height: 'auto',
-              cursor: 'pointer',
+              height: "auto",
+              cursor: "pointer",
             }}
-            onClick={() => window.open(displayAsset?.url, '_blank')}
+            onClick={() => window.open(asset, "_blank")}
+            // onClick={() => window.open(displayAsset?.url, "_blank")}
           >
             <Paper
               css={{
-                display: 'inline-block',
+                display: "inline-block",
                 fontSize: 0,
                 marginTop: 3,
-                overflow: 'hidden',
-                '&:hover': {
+                overflow: "hidden",
+                "&:hover": {
                   border: `1px solid ${theme.colors.primary}`,
                 },
               }}
             >
               <img
-                key={asset.id}
-                onContextMenu={e => {
+                // key={asset.id}
+                onContextMenu={(e) => {
                   // Allow normal context menu on right click so people can "copy image url",
                   // don't propagate to the blocking custom context menu
                   e.stopPropagation();
@@ -184,13 +228,15 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = props => {
                 css={{
                   width: 64,
                   height: 64,
-                  objectFit: 'cover',
-                  objectPosition: 'center',
+                  objectFit: "cover",
+                  objectPosition: "center",
                 }}
-                alt={asset?.name}
-                src={thumbnailAsset?.url}
+                // alt={asset?.name}
+                alt={fileName || "Bynder Asset"}
+                src={asset}
+                // src={thumbnailAsset?.url}
                 // TODO: Error handling when the image fails to load?
-                onError={error => {}}
+                onError={(error) => {}}
               />
             </Paper>
           </div>
@@ -217,10 +263,10 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = props => {
             className="close-button"
             component="label"
             css={{
-              position: 'absolute',
+              position: "absolute",
               top: 4,
               right: 4,
-              display: 'none',
+              display: "none",
               padding: 4,
             }}
             onClick={onClear}
@@ -231,64 +277,65 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = props => {
       )}
       <div
         css={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 4,
-          width: '100%',
-          overflow: 'hidden',
+          width: "100%",
+          overflow: "hidden",
         }}
       >
         {fileName && (
           <React.Fragment>
             <div>
               <Typography
-                title={asset.name}
+                // title={asset.name}
                 css={{
                   fontSize: 12,
                   color: theme.colors.text.regular,
                   marginLeft: 8,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  display: 'inline-block',
-                  textOverflow: 'ellipsis',
-                  '&:hover': {
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  display: "inline-block",
+                  textOverflow: "ellipsis",
+                  "&:hover": {
+                    textDecoration: "underline",
+                    cursor: "pointer",
                   },
                 }}
               >
-                <a href={displayAsset?.url} target="_blank"></a>
+                <a href={asset} target="_blank"></a>
+                {/* <a href={displayAsset?.url} target="_blank"></a> */}
                 {fileName}
               </Typography>
             </div>
-            {displayAsset?.fileSize && (
+            {/* {displayAsset?.fileSize && (
               <div>
                 <Typography
                   css={{
                     fontSize: 12,
-                    color: 'var(--text-caption)',
+                    color: "var(--text-caption)",
                     marginLeft: 8,
                   }}
                 >
                   {filesize(displayAsset.fileSize)}
                 </Typography>
               </div>
-            )}
+            )} */}
           </React.Fragment>
         )}
-        <div css={{ width: '100%' }}>
+        <div css={{ width: "100%" }}>
           <Button
             color="primary"
             onClick={onClick}
             css={{
               marginLeft: 8,
               ...(fileName && {
-                padding: '0 5px',
+                padding: "0 5px",
                 fontSize: 12,
               }),
             }}
           >
-            {`${asset ? 'Change' : 'Choose'} Bynder Asset`}
+            {`${asset ? "Change" : "Choose"} Bynder Asset`}
           </Button>
         </div>
       </div>
