@@ -184,6 +184,8 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
 
   // const fileName = asset && `${asset?.name}.${asset.extensions[0]}`;
 
+  console.log("ASSET", asset);
+
   return (
     <div
       css={{
