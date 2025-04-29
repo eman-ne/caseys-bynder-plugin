@@ -339,7 +339,7 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
               }),
             }}
           >
-            {`${asset ? "Change" : "Choose"} Bynder Asset`}
+            {`${asset ? "Ernie Change" : "Choose"} Bynder Asset`}
           </Button>
         </div>
       </div>
