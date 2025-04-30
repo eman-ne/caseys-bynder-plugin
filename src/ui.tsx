@@ -74,7 +74,6 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
   const [internalValue, setInternalValue] = React.useState(fastClone(value));
 
   const onChangeWrapper = (asset: SimpleBynderAssetFile) => {
-    console.log("ON CHANGE WRAPPER", asset);
     onChange(asset);
     setInternalValue(asset);
   };
@@ -91,8 +90,6 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
     // if (asset) {
     //   fileName = `${(asset as any).name}.${(asset as any).extensions[0]}`;
     // }
-
-    console.log("ON SUCCESS", url);
 
     if (url) {
       onChangeWrapper({ url });
@@ -341,7 +338,7 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
               }),
             }}
           >
-            {`${asset ? "Ernie Change" : "Choose"} Bynder Asset`}
+            {`${asset ? "Change" : "Choose"} Bynder Asset`}
           </Button>
         </div>
       </div>
