@@ -1,5 +1,5 @@
 /** @jsx jsx */
-import React from "react";
+import React, { useEffect } from "react";
 import { jsx } from "@emotion/core";
 import appState from "@builder.io/app-context";
 import {
@@ -101,6 +101,44 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        // Use composedPath() to get the actual target inside shadow DOM
+        const path = event.composedPath();
+        const actualTarget = path[0] as HTMLElement;
+
+        const isEditableField =
+          actualTarget.tagName === "INPUT" ||
+          actualTarget.tagName === "TEXTAREA" ||
+          actualTarget.isContentEditable ||
+          actualTarget.getAttribute("contenteditable") === "true";
+
+        // ALWAYS stop propagation to prevent the editor from receiving the event
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        // Only preventDefault if NOT in an editable field
+        // This allows the input to handle backspace normally
+        if (!isEditableField) {
+          event.preventDefault();
+          console.log("Delete/Backspace blocked - not in input");
+        } else {
+          console.log("Delete/Backspace allowed in input field");
+          // Let the input handle the backspace naturally
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true); // Use capture phase
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isOpen]);
+
   // const selectedAssets = React.useMemo(() => {
   //   return (internalValue?.assets ?? []).map((asset) => asset.id);
   // }, [internalValue]);
@@ -180,8 +218,6 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
   //   value?.additionalInfo?.selectedFile ?? asset?.files?.thumbnail;
 
   // const fileName = asset && `${asset?.name}.${asset.extensions[0]}`;
-
-  console.log("ASSET", asset);
 
   return (
     <div
