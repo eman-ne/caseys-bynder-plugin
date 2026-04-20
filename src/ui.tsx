@@ -184,7 +184,7 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
           fallbackValue={fastClone(value)}
           onClick={() => setIsOpen(true)}
           onClear={() => {
-            onChangeWrapper({ assets: [], url: undefined });
+            onChangeWrapper({ assets: [], url: "" });
           }}
           context={context}
         />
@@ -215,9 +215,13 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
 
   const videoAsset = value?.assets?.find((asset) => asset.type === "VIDEO");
 
-  const fileName = videoAsset
-    ? videoAsset?.previewUrls?.[0]
-    : value?.additionalInfo?.selectedFile?.url || asset || "";
+  let fileName = "";
+
+  if (videoAsset) {
+    fileName = videoAsset?.files?.thumbnail?.url || videoAsset?.url;
+  } else {
+    fileName = value?.additionalInfo?.selectedFile?.url || "";
+  }
 
   // Account for translated assets / DAT, when using the "SingleSelectFile" mode.
   // Fallback to the selected asset if additionalInfo isn't provided.
