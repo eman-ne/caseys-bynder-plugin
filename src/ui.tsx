@@ -46,9 +46,10 @@ import {
 // This component is what handles rendering when the user selects the Bynder plugin
 // It is recommended for additional versions of this Selector to keep the input type (BynderAssetFile),
 // even if SingleSelect and MultiSelect modes do not return the additionalInfo object
-export const AssetSelector: React.FC<
-  BuilderPluginProps<SimpleBynderAssetFile>
-> = (
+export const AssetSelector: React.FC<BuilderPluginProps<BynderAssetFile>> = (
+  // export const AssetSelector: React.FC<
+  //   BuilderPluginProps<SimpleBynderAssetFile>
+  // > = (
   // export const AssetSelector: React.FC<BuilderPluginProps<BynderAssetFile>> = (
   props,
 ) => {
@@ -73,33 +74,38 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
   // Keep a local state value because onChange does not trigger a re-render with a new value object.
   const [internalValue, setInternalValue] = React.useState(fastClone(value));
 
-  const onChangeWrapper = (asset: SimpleBynderAssetFile) => {
+  const onChangeWrapper = (asset: BynderAssetFile) => {
     onChange(asset);
     setInternalValue(asset);
   };
-  // const onChangeWrapper = (asset: BynderAssetFile) => {
-  //   onChange(asset);
-  //   setInternalValue(asset);
-  // };
 
   // additionalInfo is only returned by Bynder when mode === "SingleSelectFile"
   const onSuccess = (assets: unknown[], additionalInfo: AdditionalInfo) => {
-    const url = additionalInfo?.selectedFile?.url;
-    // const asset = assets?.[0];
-    // let fileName = "";
-    // if (asset) {
-    //   fileName = `${(asset as any).name}.${(asset as any).extensions[0]}`;
-    // }
-
-    if (url) {
-      onChangeWrapper({ url });
-    }
-    // if (url && fileName) {
-    //   onChangeWrapper({ url, fileName });
-    // }
+    onChangeWrapper({
+      assets: assets as BynderAsset[],
+      additionalInfo,
+      url: additionalInfo?.selectedFile?.url,
+    });
     // Manually close the modal. The onClose prop only fires when the user clicks the close button.
     setIsOpen(false);
   };
+  // const onSuccess = (assets: unknown[], additionalInfo: AdditionalInfo) => {
+  //   const url = additionalInfo?.selectedFile?.url;
+  //   // const asset = assets?.[0];
+  //   // let fileName = "";
+  //   // if (asset) {
+  //   //   fileName = `${(asset as any).name}.${(asset as any).extensions[0]}`;
+  //   // }
+
+  //   if (url) {
+  //     onChangeWrapper({ url });
+  //   }
+  //   // if (url && fileName) {
+  //   //   onChangeWrapper({ url, fileName });
+  //   // }
+  //   // Manually close the modal. The onClose prop only fires when the user clicks the close button.
+  //   setIsOpen(false);
+  // };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -176,12 +182,9 @@ export const BynderCompactViewWrapper = (props: BynderCompactViewProps) => {
         <RenderSinglePreview
           value={internalValue}
           fallbackValue={fastClone(value)}
-          // fallbackValue={fastClone(value)}
           onClick={() => setIsOpen(true)}
           onClear={() => {
-            onChangeWrapper({ url: "" });
-            // onChangeWrapper({ url: "", fileName: "" });
-            // onChangeWrapper({ assets: [] });
+            onChangeWrapper({ assets: [], url: undefined });
           }}
           context={context}
         />
@@ -204,20 +207,23 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
   // Builder provided context for matching the editor theme
   const theme = context.theme;
 
-  const asset = value?.url || fallbackValue?.url;
-  const fileName = asset;
-  // const fileName = value?.fileName || fallbackValue?.fileName;
-  // const asset = value?.assets?.[0] || fallbackValue?.assets?.[0];
+  const asset =
+    value?.assets?.[0] ||
+    fallbackValue?.assets?.[0] ||
+    value?.url ||
+    fallbackValue?.url;
+
+  const videoAsset = value?.assets?.find((asset) => asset.type === "VIDEO");
+
+  const fileName = videoAsset
+    ? videoAsset?.previewUrls?.[0]
+    : value?.additionalInfo?.selectedFile?.url || asset || "";
 
   // Account for translated assets / DAT, when using the "SingleSelectFile" mode.
   // Fallback to the selected asset if additionalInfo isn't provided.
 
-  // const displayAsset =
-  //   value?.additionalInfo?.selectedFile ?? asset?.files?.webImage;
-  // const thumbnailAsset =
-  //   value?.additionalInfo?.selectedFile ?? asset?.files?.thumbnail;
-
-  // const fileName = asset && `${asset?.name}.${asset.extensions[0]}`;
+  const displayAsset = value?.additionalInfo?.selectedFile;
+  const thumbnailAsset = value?.additionalInfo?.selectedFile;
 
   return (
     <div
@@ -243,8 +249,7 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
               height: "auto",
               cursor: "pointer",
             }}
-            onClick={() => window.open(asset, "_blank")}
-            // onClick={() => window.open(displayAsset?.url, "_blank")}
+            onClick={() => window.open(fileName as string, "_blank")}
           >
             <Paper
               css={{
@@ -258,7 +263,6 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
               }}
             >
               <img
-                // key={asset.id}
                 onContextMenu={(e) => {
                   // Allow normal context menu on right click so people can "copy image url",
                   // don't propagate to the blocking custom context menu
@@ -270,10 +274,8 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
                   objectFit: "cover",
                   objectPosition: "center",
                 }}
-                // alt={asset?.name}
-                alt={fileName || "Bynder Asset"}
-                src={asset}
-                // src={thumbnailAsset?.url}
+                alt={(fileName as string) || "Bynder Asset"}
+                src={thumbnailAsset?.url || value?.url || fallbackValue?.url}
                 // TODO: Error handling when the image fails to load?
                 onError={(error) => {}}
               />
@@ -327,7 +329,6 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
           <React.Fragment>
             <div>
               <Typography
-                // title={asset.name}
                 css={{
                   fontSize: 12,
                   color: theme.colors.text.regular,
@@ -342,24 +343,13 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
                   },
                 }}
               >
-                <a href={asset} target="_blank"></a>
-                {/* <a href={displayAsset?.url} target="_blank"></a> */}
+                <a
+                  href={displayAsset?.url || value?.url || fallbackValue?.url}
+                  target="_blank"
+                ></a>
                 {fileName}
               </Typography>
             </div>
-            {/* {displayAsset?.fileSize && (
-              <div>
-                <Typography
-                  css={{
-                    fontSize: 12,
-                    color: "var(--text-caption)",
-                    marginLeft: 8,
-                  }}
-                >
-                  {filesize(displayAsset.fileSize)}
-                </Typography>
-              </div>
-            )} */}
           </React.Fragment>
         )}
         <div css={{ width: "100%" }}>
@@ -368,10 +358,12 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
             onClick={onClick}
             css={{
               marginLeft: 8,
-              ...(fileName && {
-                padding: "0 5px",
-                fontSize: 12,
-              }),
+              ...(fileName
+                ? {
+                    padding: "0 5px",
+                    fontSize: 12,
+                  }
+                : {}),
             }}
           >
             {`${asset ? "Change" : "Choose"} Bynder Asset`}

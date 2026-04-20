@@ -8,6 +8,7 @@ import {
 type BynderAssetFile = {
   assets?: BynderAsset[];
   additionalInfo?: AdditionalInfo;
+  url: string | undefined;
 };
 
 type SimpleBynderAssetFile = {
@@ -21,30 +22,30 @@ export type BuilderPluginProps<T> = {
   context: any;
 };
 
-export type BynderCompactViewProps =
-  BuilderPluginProps<SimpleBynderAssetFile> & {
-    mode: selectionMode;
-    assetTypes?: assetType[];
-  };
-// export type BynderCompactViewProps = BuilderPluginProps<BynderAssetFile> & {
-//   mode: selectionMode;
-//   assetTypes?: assetType[];
-// };
+// export type BynderCompactViewProps =
+//   BuilderPluginProps<SimpleBynderAssetFile> & {
+//     mode: selectionMode;
+//     assetTypes?: assetType[];
+//   };
+export type BynderCompactViewProps = BuilderPluginProps<BynderAssetFile> & {
+  mode: selectionMode;
+  assetTypes?: assetType[];
+};
 
-export interface RenderSinglePreviewProps {
-  value?: SimpleBynderAssetFile;
-  fallbackValue?: SimpleBynderAssetFile;
-  onClick: () => void;
-  onClear: () => void;
-  context: any;
-}
 // export interface RenderSinglePreviewProps {
-//   value?: BynderAssetFile;
-//   fallbackValue?: BynderAssetFile;
+//   value?: SimpleBynderAssetFile;
+//   fallbackValue?: SimpleBynderAssetFile;
 //   onClick: () => void;
 //   onClear: () => void;
 //   context: any;
 // }
+export interface RenderSinglePreviewProps {
+  value?: BynderAssetFile;
+  fallbackValue?: BynderAssetFile;
+  onClick: () => void;
+  onClear: () => void;
+  context: any;
+}
 
 // AI-generated types from 3 different Bynder assets, may not be complete, hence the extends Record.
 type Capitalize<S extends string> = S extends `${infer F}${infer R}`
