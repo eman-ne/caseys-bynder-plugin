@@ -229,6 +229,8 @@ const RenderSinglePreview: React.FC<RenderSinglePreviewProps> = (props) => {
   const displayAsset = value?.additionalInfo?.selectedFile;
   const thumbnailAsset = value?.additionalInfo?.selectedFile;
 
+  console.log("Filename: ", fileName);
+
   return (
     <div
       css={{
